@@ -11,6 +11,7 @@ class Extractor:
     '''
     def __init__(self, output_dir, author):
         self.output_dir = output_dir
+        self.base_dir =output_dir[output_dir.index('content')+7:]
         self.author = author
 
     def extractInfo(self, info, datas):
@@ -30,11 +31,11 @@ class Extractor:
                     time=cur_time))
             solutions = []
             for i, data in enumerate(datas):
-                solutions.append('[{0}](../problemset/{1}/{1}.{2})'.format(
+                solutions.append('[{0}]({3}/problemset/{1}/{1}.{2})'.format(
                     data["language"], data["title_slug"],
-                    LANGS[data["lang"]]["ext"]))
-                title = '[{}](../problemset/{}/readme)'.format(
-                    data["title_cn"], data["title_slug"])
+                    LANGS[data["lang"]]["ext"],self.base_dir))
+                title = '[{0}]({2}/problemset/{1}/readme)'.format(
+                    data["title_cn"], data["title_slug"],self.base_dir)
                 # 判断同一问题是否有多个解
                 if i == len(datas) - 1 or datas[i]['title_en'] != datas[
                         i + 1]['title_en']:
@@ -64,11 +65,11 @@ class Extractor:
                     time=cur_time))
             solutions = []
             for i, data in enumerate(datas):
-                solutions.append('[{0}](../problemset/{1}/{1}.{2})'.format(
+                solutions.append('[{0}]({3}/problemset/{1}/{1}.{2})'.format(
                     data["language"], data["title_slug"],
-                    LANGS[data["lang"]]["ext"]))
-                title = '[{}](../problemset/{}/readme_en)'.format(
-                    data["title_en"], data["title_slug"])
+                    LANGS[data["lang"]]["ext"],self.base_dir))
+                title = '[{0}]({1}/problemset/{2}/readme_en)'.format(
+                    data["title_en"], data["title_slug"],self.base_dir)
                 if i == len(datas) - 1 or datas[i]['title_en'] != datas[
                         i + 1]['title_en']:
                     f.write(

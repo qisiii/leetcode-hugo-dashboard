@@ -1,3 +1,11 @@
+## 改动
+原项目：https://github.com/lryong/hugo-leetcode-dashboard
+可能是我不太懂python，原项目一直调试不通，因此略微修改，以下是改动点：
+力扣登录接口不能使用（我抓包到的接口显示接入了阿里云的无痕验证,无法构造nvc字符串，老的接口又一直获取的不对），因此修改为了手动配置cookie
+异步接口一直获取不到结果，由于本人对python不太懂，因此全部改为了request同步请求
+增量更新逻辑略微修改，避免每次都要查很多次接口
+导出文件部分路径适配
+[在线预览 Demo](https://qisiii.github.io/leetcode/)
 ## hugo-leetcode-dashboard
 
 ✨ 一个 LeetCode 答题看板的生成插件， 支持一键部署到 Hugo 站点。 **完整记录刷题心路历程** ✨

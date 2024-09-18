@@ -38,6 +38,10 @@ class Config:
     @property
     def password(self):
         return self.__getData('password')
+    
+    @property
+    def cookies(self):
+        return self.__getData('cookies')
 
     @property
     def outputDir(self):

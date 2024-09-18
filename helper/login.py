@@ -7,11 +7,11 @@ class Login:
     登录 LeetCode-cn, 获取 cookies 值
     '''
 
-    def __init__(self, username, password):
+    def __init__(self, username, password,cookies):
         self.username = username
         self.password = password
-        self.__cookies = ''
-        self.status = False
+        self.__cookies = cookies
+        self.status = True
 
     def doLogin(self):
         resp = requests.get(LEETCODE, headers=HEADERS)

@@ -38,7 +38,6 @@ TEMPLATE_README_CN = '''
 title: "LeetCode"
 layout: "leetcode"
 url: "/leetcode/"
-menu: "main"
 author: "Herbert Lu"
 ---
 
@@ -73,7 +72,6 @@ TEMPLATE_README_APPEND = '|{frontend_id}|{title}{paid_only}{is_favor}|{solutions
 TEMPLATE_DESC_EN = '''
 ---
 title: "{title_en}"
-categories: ["leetcode_en"]
 draft: false
 ---
 
@@ -100,7 +98,6 @@ draft: false
 TEMPLATE_DESC_CN = '''
 ---
 title: "{title_cn}"
-categories: ["leetcode_cn"]
 draft: false
 ---
 

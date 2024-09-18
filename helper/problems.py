@@ -12,16 +12,22 @@ from .constants import PROBLEMS, HEADERS, GRAPHQL, CODE_FORMAT
 
 
 class Problems:
+    updateSqlOld="SELECT title_slug FROM problem WHERE status == 'ac'"
+    updateSql="SELECT * FROM problem p left join submission s on s.title_slug=p.title_slug WHERE status == 'ac' and s_stored is null"
     '''核心逻辑'''
 
     def __init__(self):
-        self.login = Login(config.username, config.password)
+        self.login = Login(config.username, config.password,config.cookies)
         self.__db_dir = os.path.abspath(os.path.join(__file__, "../..", "db"))
         if not os.path.exists(self.__db_dir):
             os.makedirs(self.__db_dir)
         self.db_path = os.path.join(self.__db_dir, "leetcode.db")
-        self.__cookies = self.login.cookies
+        self.__cookies = self.convert_cookies_to_dict(self.login.cookies)
         self.problems_json = self.__getProblemsJson()
+        
+    def convert_cookies_to_dict(self,cookies):
+        cookies = dict([l.split("=", 1) for l in cookies.split("; ")])
+        return cookies
 
     def __getProblemsJson(self):
         resp = requests.get(PROBLEMS, headers=HEADERS, cookies=self.__cookies)
@@ -78,6 +84,33 @@ class Problems:
         conn.commit()
         conn.close()
 
+    def getProblemDesc(self,title_slug):
+        payload = {
+            'query': '''
+            query questionData($titleSlug: String!) {
+                question(titleSlug: $titleSlug) {
+                    questionId
+                    content
+                    translatedTitle
+                    translatedContent
+                    similarQuestions
+                    topicTags {
+                        name
+                        slug
+                        translatedName
+                    }
+                    hints
+                }
+            }
+            ''',
+            'operationName': 'questionData',
+            'variables': {
+                'titleSlug': title_slug
+            }
+        }
+        res = requests.post(GRAPHQL,json=payload,headers=HEADERS,cookies=self.__cookies)
+        return res.json()
+
     async def __getProblemDesc(self, title_slug):
         payload = {
             'query': '''
@@ -111,13 +144,17 @@ class Problems:
         '''存储 AC 问题描述信息'''
         conn = sqlite3.connect(self.db_path)
         c = conn.cursor()
-        c.execute("SELECT title_slug FROM problem WHERE status == 'ac'")
+        c.execute(self.updateSql)
         res = c.fetchall()
         if not res:
             return
-        loop = asyncio.get_event_loop()
-        problems_list = await handle_tasks(
-            loop, self.__getProblemDesc, [dict(title_slug=t[0]) for t in res])
+        ll=[dict(title_slug=t[0]) for t in res]
+        problems_list=[]
+        for t in ll:
+            problems_list.append(self.getProblemDesc(t['title_slug']))
+        # loop = asyncio.get_event_loop()
+        # problems_list = await handle_tasks(
+        #     loop, self.__getProblemDesc, [dict(title_slug=t[0]) for t in res])
         c.execute('''
             CREATE TABLE IF NOT EXISTS description (
                 id INTEGER,
@@ -156,6 +193,38 @@ class Problems:
         conn.commit()
         conn.close()
 
+    def getSubmissions(self, title_slug, offset=0, limit=500):
+        payload = {
+            'query': '''
+            query submissions($offset: Int!, $limit: Int!, $lastKey: String, $questionSlug: String!) {
+                submissionList(offset: $offset, limit: $limit, lastKey: $lastKey, questionSlug: $questionSlug) {
+                    lastKey
+                    hasNext
+                    submissions {
+                        id
+                        statusDisplay
+                        lang
+                        runtime
+                        timestamp
+                        url
+                        isPending
+                        memory
+                        __typename
+                    }
+                __typename
+                }
+            }
+            ''',
+            'operationName': 'submissions',
+            'variables': {
+                'limit': limit,
+                'offset': offset,
+                'questionSlug': title_slug
+            }
+        }
+        resp = requests.post(GRAPHQL,json=payload,headers=HEADERS,cookies=self.__cookies)
+        return resp.json(), title_slug
+            
     async def __getSubmissions(self, title_slug, offset=0, limit=500):
         payload = {
             'query': '''
@@ -190,6 +259,11 @@ class Problems:
                                     headers=HEADERS) as resp:
                 return await resp.json(), title_slug
 
+    def getCode(self, qid, lang):
+        url = CODE_FORMAT.format(qid, lang)
+        resp = requests.get(url,headers=HEADERS,cookies=self.__cookies)
+        return  resp.json(), qid, lang
+            
     async def __getCode(self, qid, lang):
         url = CODE_FORMAT.format(qid, lang)
         async with aiohttp.ClientSession(cookies=self.__cookies) as session:
@@ -200,13 +274,17 @@ class Problems:
         '''存储提交的代码信息'''
         conn = sqlite3.connect(self.db_path)
         c = conn.cursor()
-        c.execute("SELECT title_slug FROM problem WHERE status == 'ac'")
+        c.execute(self.updateSql)
         res = c.fetchall()
         if not res:
             return
-        loop = asyncio.get_event_loop()
-        submissions_list = await handle_tasks(
-            loop, self.__getSubmissions, [dict(title_slug=t[0]) for t in res])
+        # loop = asyncio.get_event_loop()
+        # submissions_list = await handle_tasks(
+        #     loop, self.__getSubmissions, [dict(title_slug=t[0]) for t in res])
+        ll=[dict(title_slug=t[0]) for t in res]
+        submissions_list=[]
+        for t in ll:
+            submissions_list.append(self.getSubmissions(t['title_slug']))
         data = []
         for submissions, title_slug in submissions_list:
             dic = set()
@@ -256,9 +334,14 @@ class Problems:
         res = c.fetchall()
         if not res:
             return
-        loop = asyncio.get_event_loop()
-        codes_list = await handle_tasks(
-            loop, self.__getCode, [dict(qid=t[0], lang=t[1]) for t in res])
+        ll=[dict(qid=t[0], lang=t[1]) for t in res]
+        codes_list=[]
+        for t in ll:
+            codes_list.append(self.getCode(t['qid'],t['lang']))
+
+        # loop = asyncio.get_event_loop()
+        # codes_list = await handle_tasks(
+        #     loop, self.__getCode, [dict(qid=t[0], lang=t[1]) for t in res])
         try:
             c.execute("ALTER TABLE submission ADD COLUMN code TEXT")
         except sqlite3.OperationalError:
@@ -284,13 +367,18 @@ class Problems:
 
     async def update(self):
         '''增量式更新数据'''
+        print("增量式更新数据'")
         output_dir = config.outputDir
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
         extractor = Extractor(output_dir, config.username)
+        print("updateProblemsInfo'")
         self.updateProblemsInfo()
+        print("storeProblemsDesc'")
         await self.storeProblemsDesc()
+        print("storeSubmissions'")
         await self.storeSubmissions()
+        print("storeCodes'")
         await self.storeCodes()
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = self.__dict_factory
@@ -329,6 +417,7 @@ class Problems:
 
     def clearDB(self):
         '''重建数据'''
+        print('--开始清除数据库--')
         conn = sqlite3.connect(self.db_path)
         c = conn.cursor()
         c.execute('''
@@ -357,3 +446,5 @@ class Problems:
             c.execute('DROP TABLE submission')
         conn.commit()
         conn.close()
+        print('--结束清除数据库--')
+

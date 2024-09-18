@@ -1,7 +1,7 @@
 # LeetCode 相关链接
-LEETCODE = "https://leetcode-cn.com"
+LEETCODE = "https://leetcode.cn"
 GRAPHQL = LEETCODE + "/graphql"
-LOGIN = LEETCODE + "/accounts/login/"
+LOGIN = "https://leetcode-cn.com/accounts/login/"
 PROBLEMS = LEETCODE + "/api/problems/all/"
 SUBMISSIONS_FORMAT = LEETCODE + "/api/submissions/?offset={}&limit=20"
 CODE_FORMAT = LEETCODE + "/submissions/latest/?qid={}&lang={}"
