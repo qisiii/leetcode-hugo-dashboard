@@ -13,7 +13,7 @@ from .constants import PROBLEMS, HEADERS, GRAPHQL, CODE_FORMAT
 
 class Problems:
     updateSqlOld="SELECT title_slug FROM problem WHERE status == 'ac'"
-    updateSql="SELECT * FROM problem p left join submission s on s.title_slug=p.title_slug WHERE status == 'ac' and s_stored is null"
+    updateSql="SELECT p.title_slug FROM problem p left join submission s on s.title_slug=p.title_slug WHERE status == 'ac' and s_stored is null"
     '''核心逻辑'''
 
     def __init__(self):
@@ -108,6 +108,7 @@ class Problems:
                 'titleSlug': title_slug
             }
         }
+        print('getProblemDesc:'+title_slug)
         res = requests.post(GRAPHQL,json=payload,headers=HEADERS,cookies=self.__cookies)
         return res.json()
 
@@ -170,6 +171,7 @@ class Problems:
             )
             ''')
         for problem in problems_list:
+            print(problem)
             p = ProblemDescNode(problem)
             c.execute(
                 '''
@@ -329,7 +331,7 @@ class Problems:
         conn = sqlite3.connect(self.db_path)
         c = conn.cursor()
         c.execute(
-            "SELECT p.id, lang FROM submission s LEFT JOIN problem p ON s.title_slug=p.title_slug"
+            "SELECT p.id, lang FROM submission s LEFT JOIN problem p ON s.title_slug=p.title_slug where s_stored=0"
         )
         res = c.fetchall()
         if not res:
@@ -374,11 +376,11 @@ class Problems:
         extractor = Extractor(output_dir, config.username)
         print("updateProblemsInfo'")
         self.updateProblemsInfo()
-        print("storeProblemsDesc'")
+        print("storeProblemsDesc")
         await self.storeProblemsDesc()
-        print("storeSubmissions'")
+        print("storeSubmissions")
         await self.storeSubmissions()
-        print("storeCodes'")
+        print("storeCodes")
         await self.storeCodes()
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = self.__dict_factory
@@ -408,7 +410,7 @@ class Problems:
             ON p.id=d.id
             JOIN submission s
             ON p.title_slug=s.title_slug
-            ORDER BY p.id DESC
+            ORDER BY timestamp DESC
             ''')
         datas = c.fetchall()
         extractor.extractInfo(self.info, datas)
