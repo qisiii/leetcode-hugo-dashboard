@@ -12,8 +12,6 @@ from .constants import PROBLEMS, HEADERS, GRAPHQL, CODE_FORMAT
 
 
 class Problems:
-    updateSqlOld="SELECT title_slug FROM problem WHERE status == 'ac'"
-    updateSql="SELECT p.title_slug FROM problem p left join submission s on s.title_slug=p.title_slug WHERE status == 'ac' and s_stored is null"
     '''核心逻辑'''
 
     def __init__(self):
@@ -38,6 +36,14 @@ class Problems:
     def info(self):
         '''获取用户基本信息'''
         return InfoNode(self.problems_json)
+    
+    def getSql(self):
+        if self.type=='rebuild':
+            return "SELECT title_slug FROM problem WHERE status == 'ac'"
+        else:
+            return "SELECT p.title_slug FROM problem p left join submission s on s.title_slug=p.title_slug WHERE status == 'ac' and s_stored is null"
+            
+    
 
     def __dict_factory(self, cursor, row):
         '''修改 SQLite 数据呈现方式'''
@@ -108,7 +114,6 @@ class Problems:
                 'titleSlug': title_slug
             }
         }
-        print('getProblemDesc:'+title_slug)
         res = requests.post(GRAPHQL,json=payload,headers=HEADERS,cookies=self.__cookies)
         return res.json()
 
@@ -145,7 +150,7 @@ class Problems:
         '''存储 AC 问题描述信息'''
         conn = sqlite3.connect(self.db_path)
         c = conn.cursor()
-        c.execute(self.updateSql)
+        c.execute(self.getSql())
         res = c.fetchall()
         if not res:
             return
@@ -171,7 +176,6 @@ class Problems:
             )
             ''')
         for problem in problems_list:
-            print(problem)
             p = ProblemDescNode(problem)
             c.execute(
                 '''
@@ -276,7 +280,7 @@ class Problems:
         '''存储提交的代码信息'''
         conn = sqlite3.connect(self.db_path)
         c = conn.cursor()
-        c.execute(self.updateSql)
+        c.execute(self.getSql())
         res = c.fetchall()
         if not res:
             return
@@ -367,14 +371,15 @@ class Problems:
         conn.commit()
         conn.close()
 
-    async def update(self):
+    async def update(self,type):
+        self.type=type
         '''增量式更新数据'''
         print("增量式更新数据'")
         output_dir = config.outputDir
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
         extractor = Extractor(output_dir, config.username)
-        print("updateProblemsInfo'")
+        print("updateProblemsInfo")
         self.updateProblemsInfo()
         print("storeProblemsDesc")
         await self.storeProblemsDesc()

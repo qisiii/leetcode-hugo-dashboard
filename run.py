@@ -16,7 +16,7 @@ if __name__ == "__main__":
         if key == 'q':
             break
         elif key == '1':
-            Main().update()
+            Main().update('update')
             break
         elif key == '2':
             Main().rebuild()
