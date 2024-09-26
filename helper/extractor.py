@@ -30,10 +30,17 @@ class Extractor:
                     ac_hard=info.ac_hard,
                     time=cur_time))
             solutions = []
+            langSet=set()
             for i, data in enumerate(datas):
-                solutions.append('[{0}]({3}/problemset/{1}/{1}.{2})'.format(
-                    data["language"], data["title_slug"],
-                    LANGS[data["lang"]]["ext"],self.base_dir))
+                # 单语言多解算作一条，因为我把单个语言所有解放到了一个文件
+                # solutions==0表示第一个解必须写
+                # solutions不为空，就只有语言不同的情况才可以接着写,这里拿set去做处理
+                if  len(solutions)==0 or data['lang'] not in langSet:
+                    langSet.add(data['lang'])
+                    solutions.append('[{0}]({3}/problemset/{1}/{1}.{2})'.format(
+                        data["language"], data["title_slug"],
+                        LANGS[data["lang"]]["ext"],self.base_dir))
+                    print(solutions)
                 title = '[{0}]({2}/problemset/{1}/readme)'.format(
                     data["title_cn"], data["title_slug"],self.base_dir)
                 # 判断同一问题是否有多个解
@@ -51,6 +58,7 @@ class Extractor:
                             tags=data['tags_cn'].replace('- ', '').replace(
                                 '\n', '、')))
                     solutions = []
+                    langSet.clear()
         print(f'{os.path.abspath(readme_cn_path)} done!')
         readme_en_path = os.path.join(self.output_dir, 'leetcode_en.md')
         with open(readme_en_path, 'w', encoding='utf-8') as f:
@@ -64,10 +72,16 @@ class Extractor:
                     ac_hard=info.ac_hard,
                     time=cur_time))
             solutions = []
+            langSet=set()
             for i, data in enumerate(datas):
-                solutions.append('[{0}]({3}/problemset/{1}/{1}.{2})'.format(
-                    data["language"], data["title_slug"],
-                    LANGS[data["lang"]]["ext"],self.base_dir))
+                # 单语言多解算作一条，因为我把单个语言所有解放到了一个文件
+                # solutions==0表示第一个解必须写
+                # solutions不为空，就只有语言不同的情况才可以接着写,这里拿set去做处理
+                if  len(solutions)==0 or data['lang'] not in langSet:
+                    langSet.add(data['lang'])
+                    solutions.append('[{0}]({3}/problemset/{1}/{1}.{2})'.format(
+                        data["language"], data["title_slug"],
+                        LANGS[data["lang"]]["ext"],self.base_dir))
                 title = '[{0}]({1}/problemset/{2}/readme_en)'.format(
                     data["title_en"], data["title_slug"],self.base_dir)
                 if i == len(datas) - 1 or datas[i]['title_en'] != datas[
@@ -84,6 +98,7 @@ class Extractor:
                             tags=data['tags_en'].replace('- ', '').replace(
                                 '\n', ', ')))
                     solutions = []
+                    langSet.clear()
         print(f'{os.path.abspath(readme_en_path)} done!')
 
     def __extractDesc(self, data):
@@ -138,9 +153,17 @@ class Extractor:
             os.makedirs(folder_path)
         code_path = os.path.join(
             folder_path, f'{data["title_slug"]}.{LANGS[data["lang"]]["ext"]}.md')
-        with open(code_path, 'w', encoding='utf-8') as f:
+        with open(code_path, 'a+', encoding='utf-8') as f:
+            try:
+                file_content = f.read()
+                if file_content:
+                    TEMPLATE=TEMPLATE_APPEND_CODE
+                else:
+                    TEMPLATE=TEMPLATE_CODE
+            except FileNotFoundError:
+                print("文件不存在")
             f.write(
-                TEMPLATE_CODE.format(
+                TEMPLATE.format(
                     style=LANGS[data['lang']]['style'],
                     title_cn=data['title_cn'],
                     title_en=data['title_en'],
@@ -149,6 +172,8 @@ class Extractor:
                     runtime=data['runtime'],
                     memory=data['memory'],
                     ext=LANGS[data['lang']]['ext'],
+                    comment=data['comment'],
+                    flag=data['flag'],
                     code=data['code']))
         print(f'{os.path.abspath(code_path)} done!')
 

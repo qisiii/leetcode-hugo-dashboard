@@ -123,9 +123,14 @@ def convert_cookies_to_dict(cookies):
 def path():
     output_dir="/Users/hkc/resource/hugo/content/leetcode"
     print()
+def value():
+    a={'a':'1'}
+    b=a.get('c',{'comment':'tewt'})['comment']
+    print(b)
 
 # getDesc()
 # getproblem()
 # print(__getSubmissions('two-sum'))
 # storeCodes()
-path()
+# path()
+value()

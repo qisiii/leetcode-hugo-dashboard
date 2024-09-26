@@ -95,6 +95,12 @@ class SubmissionNode:
         self.runtime = dic['runtime']
         self.timestamp = self.__formTime(int(dic['timestamp']))
         self.title_slug = dic['title_slug']
+        if dic.get('submissionComment') is None:      
+            self.comment =''
+            self.flag =''
+        else:
+            self.comment=dic['submissionComment']['comment']
+            self.flag=dic['submissionComment']['flagType']
 
     @property
     def language(self):

@@ -2,3 +2,5 @@ db/
 .vscode
 **/__pycache__
 **/.ipynb_checkpoints/
+store/
+content/

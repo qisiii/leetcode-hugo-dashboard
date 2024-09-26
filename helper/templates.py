@@ -126,12 +126,31 @@ TEMPLATE_CODE = '''
 title: "{title_cn} ({title_en})"
 draft: false
 ---
+
+## 思路:{comment}
 ```{ext}
 {style} @Title: {title_cn} ({title_en})
 {style} @Author: {author}
 {style} @Date: {timestamp}
 {style} @Runtime: {runtime}
 {style} @Memory: {memory}
+{style} @comment: {comment}
+{style} @flag: {flag}
+{code}
+```
+'''
+
+# 题目代码其他解法模板
+TEMPLATE_APPEND_CODE = '''
+## 思路:{comment}
+```{ext}
+{style} @Title: {title_cn} ({title_en})
+{style} @Author: {author}
+{style} @Date: {timestamp}
+{style} @Runtime: {runtime}
+{style} @Memory: {memory}
+{style} @comment: {comment}
+{style} @flag: {flag}
 {code}
 ```
 '''

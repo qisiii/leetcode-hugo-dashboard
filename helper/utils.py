@@ -53,3 +53,7 @@ async def handle_tasks(loop, func, args):
         task = asyncio.ensure_future(func(args))
         loop.run_until_complete(task)
         return [task.result()]
+    
+def convert_cookies_to_dict(cookies):
+        cookies = dict([l.split("=", 1) for l in cookies.split("; ")])
+        return cookies
