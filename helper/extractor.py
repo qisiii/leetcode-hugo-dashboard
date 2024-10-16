@@ -40,7 +40,6 @@ class Extractor:
                     solutions.append('[{0}]({3}/problemset/{1}/{1}.{2})'.format(
                         data["language"], data["title_slug"],
                         LANGS[data["lang"]]["ext"],self.base_dir))
-                    print(solutions)
                 title = '[{0}]({2}/problemset/{1}/readme)'.format(
                     data["title_cn"], data["title_slug"],self.base_dir)
                 # 判断同一问题是否有多个解

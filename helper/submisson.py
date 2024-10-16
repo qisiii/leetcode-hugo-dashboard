@@ -26,7 +26,7 @@ class Submisson:
         elif self.type=='rebuild':
             return "SELECT title_slug FROM problem WHERE status == 'ac'"
         else:
-            return "SELECT p.title_slug FROM problem p left join submission s on s.title_slug=p.title_slug WHERE status == 'ac' and s_stored==0"
+            return "SELECT p.title_slug FROM problem p left join submission s on s.title_slug=p.title_slug WHERE status == 'ac' and s_stored is null"
     
     def update(self):
         self.storeSubmissions()
@@ -56,7 +56,9 @@ class Submisson:
                 comment TEXT,
                 flag TEXT,
                 s_stored INTEGER DEFAULT 0,
-                PRIMARY KEY(submission_id)
+                code TEXT,
+                PRIMARY KEY(submission_id),
+                UNIQUE(lang,title_slug,flag)
             )
             ''')
         c.execute(self.getSql())
@@ -76,9 +78,10 @@ class Submisson:
         for submission in data:
             try:
                 s = SubmissionNode(submission)
+                ###在lang+title_slug+flag的唯一索引下，只能有一种解法
                 c.execute(
                     '''
-                    INSERT OR IGNORE INTO submission (
+                    INSERT OR replace INTO submission (
                         submission_id, lang, language, memory, runtime, timestamp, title_slug,comment,flag
                     )
                     VALUES (

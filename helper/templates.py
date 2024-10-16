@@ -122,10 +122,10 @@ draft: false
 
 # 题目代码模板
 TEMPLATE_CODE = '''
----
-title: "{title_cn} ({title_en})"
-draft: false
----
++++
+title = "{title_cn} ({title_en})"
+draft = false
++++
 
 ## 思路:{comment}
 ```{ext}
